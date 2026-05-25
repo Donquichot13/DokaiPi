@@ -1,0 +1,20 @@
+// Prisma schema — CRM implementation in Phase 7
+// Run: pnpm prisma:generate after updating this file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Placeholder model — replaced with full CRM schema in Phase 7
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
