@@ -5,11 +5,16 @@
  * Passes user data to AdminLayoutShell as plain props (serialisable).
  */
 
-import { redirect } from 'next/navigation'
+import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { AdminLayoutShell } from '@/components/admin/AdminLayoutShell'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Static export mode (GitHub Pages): no auth server available — hide admin entirely.
+  if (process.env.EXPORT_MODE === 'true') {
+    notFound()
+  }
+
   const session = await auth()
 
   // Middleware handles /admin protection, but guard here too for defence-in-depth
