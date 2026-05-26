@@ -1,7 +1,11 @@
+'use client'
+
 /**
  * /admin-preview — Design system showcase for Vision UI admin components.
  * This route is NOT linked from the public site; it exists solely for visual QA.
  * In production, protect it behind the admin middleware (Phase 6).
+ *
+ * Client component: SidebarItem receives Lucide forwardRef icons as props.
  */
 
 import {
