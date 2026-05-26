@@ -10,13 +10,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Placeholder model — replaced with full CRM schema in Phase 7
+// User — auth + admin access (Phase 6); extended with client relations in Phase 7
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String   // bcrypt hash — never store plaintext
+  role         UserRole @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
 }
 
 // Quote — added in Phase 4; extended with relations in Phase 7
