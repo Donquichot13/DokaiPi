@@ -63,6 +63,31 @@
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
   }
 
+  /* Admin text input / select — used in forms inside admin pages */
+  .input-admin {
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .input-admin::placeholder {
+    color: #718096;
+  }
+
+  .input-admin:focus {
+    border-color: rgba(0, 117, 255, 0.5);
+  }
+
+  .input-admin option {
+    background: #0f1535;
+    color: #fff;
+  }
+
   /* Shimmer skeleton loading for admin */
   .shimmer {
     background: linear-gradient(

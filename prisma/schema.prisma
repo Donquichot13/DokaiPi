@@ -1,5 +1,6 @@
-// Prisma schema — CRM implementation in Phase 7
-// Run: pnpm prisma:generate after updating this file
+// Prisma schema — full CRM (Phase 7)
+// Run: pnpm prisma:generate after changes
+// Run: pnpm prisma:migrate -- --name <description> to create a migration
 
 generator client {
   provider = "prisma-client-js"
@@ -10,51 +11,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User — auth + admin access (Phase 6); extended with client relations in Phase 7
-model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
-  passwordHash String   // bcrypt hash — never store plaintext
-  role         UserRole @default(ADMIN)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("users")
-}
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum UserRole {
   ADMIN
   CLIENT
-}
-
-// Quote — added in Phase 4; extended with relations in Phase 7
-model Quote {
-  id           String      @id @default(cuid())
-  quoteNumber  String      @unique // Q-YYYY-NNNN
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  // Contact
-  name         String
-  email        String
-  phone        String?
-  company      String?
-  website      String?
-  message      String?
-  howDidYouHear String
-
-  // Pricing snapshot (JSON — never recalculate from relations)
-  projectType    String
-  features       Json      // string[]
-  modifiers      Json      // string[]
-  priceBreakdown Json      // PriceBreakdown
-
-  // Admin workflow
-  status         QuoteStatus @default(PENDING)
-  adminNote      String?
-
-  @@map("quotes")
 }
 
 enum QuoteStatus {
@@ -64,4 +25,146 @@ enum QuoteStatus {
   ACCEPTED
   REJECTED
   ARCHIVED
+}
+
+enum ProjectStatus {
+  DISCOVERY
+  IN_PROGRESS
+  REVIEW
+  DELIVERED
+  ON_HOLD
+  CANCELLED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String   // bcrypt hash — never store plaintext
+  role         UserRole @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  notes        Note[]
+  activities   Activity[]
+
+  @@map("users")
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  phone     String?
+  company   String?
+  website   String?
+  source    String?   // how they found DokaiPi
+  deletedAt DateTime? // soft delete — always filter deletedAt: null in queries
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quotes     Quote[]
+  projects   Project[]
+  activities Activity[]
+
+  @@map("clients")
+}
+
+model Quote {
+  id          String   @id @default(cuid())
+  quoteNumber String   @unique // Q-YYYY-NNNN
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Contact snapshot (collected at submission; may differ from Client record)
+  name          String
+  email         String
+  phone         String?
+  company       String?
+  website       String?
+  message       String?
+  howDidYouHear String
+
+  // Pricing snapshot (JSON — never recalculate from relations)
+  projectType    String
+  features       Json   // string[]
+  modifiers      Json   // string[]
+  priceBreakdown Json   // PriceBreakdown object
+
+  // Admin workflow
+  status    QuoteStatus @default(PENDING)
+  adminNote String?
+
+  // Optional CRM links (set by admin after reviewing quote)
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+
+  project   Project? // back-relation from Project.quoteId
+
+  @@map("quotes")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(DISCOVERY)
+  startDate   DateTime?
+  dueDate     DateTime?
+  deliveredAt DateTime?
+  budget      Int?          // HT in euros (typically from accepted quote totalHT)
+  progress    Int           @default(0) // 0–100
+
+  deletedAt DateTime? // soft delete
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  quoteId String? @unique
+  quote   Quote?  @relation(fields: [quoteId], references: [id])
+
+  notes      Note[]
+  activities Activity[]
+
+  @@map("projects")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@map("notes")
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  type      String   // 'quote_received' | 'project_created' | 'status_changed' | …
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@map("activities")
 }
