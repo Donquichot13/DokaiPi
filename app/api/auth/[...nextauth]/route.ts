@@ -11,6 +11,19 @@ import type { NextRequest } from 'next/server'
 // Required for output: 'export' — all route handlers must declare force-static.
 export const dynamic = 'force-static'
 
+// Required for output: 'export' with catch-all dynamic segments.
+// Enumerates the NextAuth paths that will be pre-rendered as static stubs.
+export function generateStaticParams() {
+  return [
+    { nextauth: ['session'] },
+    { nextauth: ['csrf'] },
+    { nextauth: ['signin'] },
+    { nextauth: ['signout'] },
+    { nextauth: ['providers'] },
+    { nextauth: ['callback', 'credentials'] },
+  ]
+}
+
 export async function GET(req: NextRequest) {
   if (process.env.EXPORT_MODE === 'true') {
     return new Response(JSON.stringify({ error: 'Auth requires a server runtime' }), {
