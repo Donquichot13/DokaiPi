@@ -23,8 +23,10 @@ export function GlassCard({
   noPadding = false,
   as: Tag = 'div',
 }: Props) {
+  // Cast needed for React 19 polymorphic typing with generic ElementType
+  const Component = Tag as React.ComponentType<{ children?: React.ReactNode; className?: string }>
   return (
-    <Tag
+    <Component
       className={cn(
         'card-glass', // defined in globals.css: blur, rgba bg, border, rounded-2xl
         !noPadding && 'p-6',
@@ -33,6 +35,6 @@ export function GlassCard({
       )}
     >
       {children}
-    </Tag>
+    </Component>
   )
 }
